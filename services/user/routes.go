@@ -1,12 +1,15 @@
 package user
 
 import (
+	"encoding/json"
+	"go/types"
 	"net/http"
+
 	"github.com/gorilla/mux"
+	utils "github.com/sikozonpc/ecom/Utils"
 )
 
-type Handler struct{
-	
+type Handler struct {
 }
 
 func NewHandler() *Handler {
@@ -24,4 +27,12 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	// TODO: implement register logic
+	// get JSON payload
+	var payload types.RegisterUserPayload
+	if err:=utils.ParseJson(r,payload) err!=nil{
+		utils.writeError(w, http.StatusBadrequest(),err )
+	}
+	// check if the user exists
+	// if it doesnt we create the new user
+
 }
