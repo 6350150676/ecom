@@ -1,19 +1,22 @@
 package user
 
 import (
-	"encoding/json"
-	"go/types"
+	"fmt"
 	"net/http"
+
+	"github.com/sikozonpc/ecom/services/auth"
+	"github.com/sikozonpc/ecom/types"
 
 	"github.com/gorilla/mux"
 	utils "github.com/sikozonpc/ecom/Utils"
 )
 
 type Handler struct {
+	store types.Userstore
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(store types.Userstore) *Handler {
+	return &Handler{store: store}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
@@ -29,10 +32,26 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	// TODO: implement register logic
 	// get JSON payload
 	var payload types.RegisterUserPayload
-	if err:=utils.ParseJson(r,payload) err!=nil{
-		utils.writeError(w, http.StatusBadrequest(),err )
+	if err := utils.ParseJson(r, payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
 	}
 	// check if the user exists
+	_, err := h.store.GetUserByEmail(payload.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user. with email %s already exists", payload.Email))
+		return
+	}
+	hashedPassword, err := auth.HashPassword(payload.Password)
 	// if it doesnt we create the new user
-
+	err = h.store.CreateUser(types.User{
+		FirstName: payload.FirstName,
+		LastName:  payload.LastName,
+		Email:     payload.Email,
+		Password:  payload.Password,
+	})
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.Writejson(w, http.StatusCreated, nil)
 }
